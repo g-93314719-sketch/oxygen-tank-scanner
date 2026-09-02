@@ -301,6 +301,474 @@
       display: none;
     }
   </style>
+
+<style id="blackGoldButtonStyle">
+/* ============================================================
+   BLACK-GOLD LUXURY BUTTONS
+   Inspired by the user's reference: left 3rd button
+   ============================================================ */
+
+button,
+.btn,
+.action-btn,
+.mode-btn,
+.nav-btn,
+.primary-btn,
+.secondary-btn {
+  position: relative;
+  overflow: hidden;
+  border-radius: 999px !important;
+
+  /* left 3rd reference: deep charcoal / black-gold face */
+  background:
+    linear-gradient(180deg,
+      rgba(61, 51, 35, 0.98) 0%,
+      rgba(31, 29, 27, 0.99) 48%,
+      rgba(24, 24, 24, 1) 100%) !important;
+
+  color: #f7e3b0 !important;
+
+  border: 2px solid transparent !important;
+  background-clip: padding-box !important;
+
+  box-shadow:
+    0 5px 0 rgba(10, 9, 8, 0.95),
+    0 8px 18px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(225, 165, 45, 0.95),
+    0 0 12px rgba(205, 145, 25, 0.28),
+    inset 0 1px 0 rgba(255, 240, 200, 0.32),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.62) !important;
+
+  text-shadow:
+    0 1px 2px rgba(0,0,0,0.9),
+    0 0 8px rgba(238, 190, 75, 0.12);
+
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    filter 0.16s ease;
+}
+
+/* Metallic gold edge */
+button::before,
+.btn::before,
+.action-btn::before,
+.mode-btn::before,
+.nav-btn::before,
+.primary-btn::before,
+.secondary-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+
+  background: linear-gradient(
+    135deg,
+    #fff0b0 0%,
+    #d89b24 18%,
+    #8f5b08 48%,
+    #f0bd45 78%,
+    #fff0b0 100%
+  );
+
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+/* Soft glass/metal highlight */
+button::after,
+.btn::after,
+.action-btn::after,
+.mode-btn::after,
+.nav-btn::after,
+.primary-btn::after,
+.secondary-btn::after {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 7%;
+  height: 34%;
+  border-radius: 999px;
+  pointer-events: none;
+
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.18),
+    rgba(255,255,255,0.025)
+  );
+
+  opacity: 0.9;
+}
+
+/* Keep text/icons above the decorative layers */
+button > *,
+.btn > *,
+.action-btn > *,
+.mode-btn > *,
+.nav-btn > *,
+.primary-btn > *,
+.secondary-btn > * {
+  position: relative;
+  z-index: 2;
+}
+
+button:hover,
+.btn:hover,
+.action-btn:hover,
+.mode-btn:hover,
+.nav-btn:hover,
+.primary-btn:hover,
+.secondary-btn:hover {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+  box-shadow:
+    0 6px 0 rgba(10, 9, 8, 0.95),
+    0 11px 24px rgba(0,0,0,0.52),
+    0 0 0 1px rgba(242, 190, 67, 1),
+    0 0 20px rgba(221, 160, 35, 0.38),
+    inset 0 1px 0 rgba(255, 245, 215, 0.42),
+    inset 0 -2px 5px rgba(0,0,0,0.62) !important;
+}
+
+button:active,
+.btn:active,
+.action-btn:active,
+.mode-btn:active,
+.nav-btn:active,
+.primary-btn:active,
+.secondary-btn:active {
+  transform: translateY(3px) scale(0.99);
+  box-shadow:
+    0 2px 0 rgba(10,9,8,0.95),
+    0 4px 10px rgba(0,0,0,0.42),
+    0 0 0 1px rgba(218, 154, 30, 0.95),
+    inset 0 2px 5px rgba(0,0,0,0.62) !important;
+}
+
+/* Selected / active mode: same reference family, slightly stronger gold */
+button.active,
+.btn.active,
+.action-btn.active,
+.mode-btn.active,
+.nav-btn.active,
+button.selected,
+.btn.selected,
+.mode-btn.selected {
+  background:
+    linear-gradient(180deg,
+      rgba(76, 62, 36, 1) 0%,
+      rgba(35, 31, 26, 1) 52%,
+      rgba(24, 23, 21, 1) 100%) !important;
+
+  color: #ffe8aa !important;
+
+  box-shadow:
+    0 5px 0 rgba(9,8,7,1),
+    0 9px 22px rgba(0,0,0,0.52),
+    0 0 0 1px #f2bd48,
+    0 0 22px rgba(229, 172, 51, 0.46),
+    inset 0 1px 0 rgba(255,245,214,0.45),
+    inset 0 -2px 6px rgba(0,0,0,0.65) !important;
+}
+
+/* Make the main four function buttons especially close to the reference */
+#issueInBtn,
+#issueOutBtn,
+#inventoryBtn,
+#traceBtn,
+button[data-action="issueIn"],
+button[data-action="issueOut"],
+button[data-action="inventory"],
+button[data-action="trace"] {
+  min-height: 64px;
+  letter-spacing: 0.02em;
+  font-weight: 700;
+}
+
+/* Respect reduced-motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  button,
+  .btn,
+  .action-btn,
+  .mode-btn,
+  .nav-btn,
+  .primary-btn,
+  .secondary-btn {
+    transition: none !important;
+  }
+}
+</style>
+
+
+<style id="animatedBlackGoldBackground">
+/* ============================================================
+   V8 — ANIMATED DEEP BLACK / GOLD BACKGROUND
+   Elegant, slow-moving luxury background
+   ============================================================ */
+
+html, body {
+  background: #070707 !important;
+  min-height: 100%;
+}
+
+/* Main animated background layers */
+body {
+  position: relative;
+  overflow-x: hidden;
+  isolation: isolate;
+
+  background:
+    radial-gradient(circle at 15% 20%,
+      rgba(178, 126, 27, 0.13) 0%,
+      rgba(178, 126, 27, 0.035) 22%,
+      transparent 48%),
+    radial-gradient(circle at 85% 75%,
+      rgba(214, 160, 47, 0.10) 0%,
+      rgba(214, 160, 47, 0.025) 24%,
+      transparent 50%),
+    linear-gradient(135deg, #050505 0%, #11100e 48%, #050505 100%) !important;
+}
+
+/* Moving golden ambient glow */
+body::before {
+  content: "";
+  position: fixed;
+  z-index: -2;
+  width: 75vw;
+  height: 75vw;
+  max-width: 650px;
+  max-height: 650px;
+  left: -20vw;
+  top: -18vw;
+  border-radius: 50%;
+  pointer-events: none;
+
+  background:
+    radial-gradient(circle,
+      rgba(225, 169, 54, 0.16) 0%,
+      rgba(191, 132, 25, 0.075) 25%,
+      rgba(120, 80, 12, 0.025) 48%,
+      transparent 72%);
+
+  filter: blur(28px);
+  opacity: 0.9;
+
+  animation: luxuryGlowOne 14s ease-in-out infinite alternate;
+}
+
+/* Second moving glow */
+body::after {
+  content: "";
+  position: fixed;
+  z-index: -2;
+  width: 70vw;
+  height: 70vw;
+  max-width: 620px;
+  max-height: 620px;
+  right: -20vw;
+  bottom: -18vw;
+  border-radius: 50%;
+  pointer-events: none;
+
+  background:
+    radial-gradient(circle,
+      rgba(214, 155, 38, 0.14) 0%,
+      rgba(153, 103, 18, 0.055) 30%,
+      transparent 70%);
+
+  filter: blur(32px);
+  opacity: 0.85;
+
+  animation: luxuryGlowTwo 18s ease-in-out infinite alternate;
+}
+
+/* Very subtle moving gold light sweep */
+body > .container,
+body > main,
+body > #app,
+body > #root {
+  position: relative;
+  z-index: 1;
+}
+
+/* Add a background shimmer without affecting clicks */
+body {
+  --gold-line: rgba(225, 169, 54, 0.055);
+}
+
+@keyframes luxuryGlowOne {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.92);
+  }
+  50% {
+    transform: translate3d(22vw, 12vh, 0) scale(1.08);
+  }
+  100% {
+    transform: translate3d(8vw, 30vh, 0) scale(0.98);
+  }
+}
+
+@keyframes luxuryGlowTwo {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-18vw, -10vh, 0) scale(1.08);
+  }
+  100% {
+    transform: translate3d(-5vw, -25vh, 0) scale(0.94);
+  }
+}
+
+/* Subtle gold atmospheric particles */
+body {
+  background-image:
+    radial-gradient(circle at 20% 30%, var(--gold-line) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 80% 20%, var(--gold-line) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 60% 80%, var(--gold-line) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 30% 75%, var(--gold-line) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 90% 60%, var(--gold-line) 0 1px, transparent 1.5px),
+    linear-gradient(135deg, #050505 0%, #11100e 48%, #050505 100%) !important;
+
+  background-size:
+    260px 260px,
+    340px 340px,
+    420px 420px,
+    300px 300px,
+    380px 380px,
+    100% 100%;
+
+  animation: backgroundDrift 28s linear infinite;
+}
+
+@keyframes backgroundDrift {
+  0% {
+    background-position:
+      0 0,
+      0 0,
+      0 0,
+      0 0,
+      0 0,
+      0 0;
+  }
+  50% {
+    background-position:
+      35px 55px,
+      -45px 30px,
+      55px -35px,
+      -30px 50px,
+      40px -45px,
+      0 0;
+  }
+  100% {
+    background-position:
+      70px 110px,
+      -90px 60px,
+      110px -70px,
+      -60px 100px,
+      80px -90px,
+      0 0;
+  }
+}
+
+/* Keep content readable above the animated background */
+.section,
+.card,
+.modal,
+.panel,
+.scanner-container {
+  position: relative;
+  z-index: 2;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  body,
+  body::before,
+  body::after {
+    animation: none !important;
+  }
+}
+</style>
+
+
+<style id="goldTitleAndFooterStyle">
+/* ============================================================
+   V9 — GOLD TITLE + COPYRIGHT FOOTER
+   Visual-only changes; all existing functions remain unchanged.
+   ============================================================ */
+
+/* Main title / heading text */
+h1,
+h2,
+h3,
+.page-title,
+.main-title,
+.title,
+.logo-title {
+  color: #e7b84b !important;
+  text-shadow:
+    0 1px 2px rgba(0,0,0,0.95),
+    0 0 10px rgba(231,184,75,0.18) !important;
+}
+
+/* Dedicated system title, if present */
+#title,
+#appTitle,
+#systemTitle {
+  color: #e7b84b !important;
+  text-shadow:
+    0 1px 2px rgba(0,0,0,0.95),
+    0 0 10px rgba(231,184,75,0.18) !important;
+}
+
+/* Copyright footer */
+#ghhmCopyrightFooter {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  padding: 14px 12px 18px;
+  margin-top: 18px;
+
+  color: #d9a83e;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 1.4;
+
+  text-shadow:
+    0 1px 2px rgba(0,0,0,0.95),
+    0 0 8px rgba(217,168,62,0.16);
+
+  opacity: 0.86;
+  user-select: none;
+}
+
+/* Small gold separator above footer */
+#ghhmCopyrightFooter::before {
+  content: "";
+  display: block;
+  width: 54px;
+  height: 1px;
+  margin: 0 auto 8px;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(217,168,62,0.78),
+    transparent
+  );
+
+  box-shadow: 0 0 7px rgba(217,168,62,0.22);
+}
+</style>
+
 </head>
 
 <body>
@@ -2394,6 +2862,11 @@
   updateUI();
 
 </script>
+
+
+<footer id="ghhmCopyrightFooter" aria-label="Copyright">
+  HAK MILIK © GHHM PFBSA
+</footer>
 
 </body>
 </html>
