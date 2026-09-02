@@ -1,27 +1,1054 @@
-from pathlib import Path
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
 
-src = Path("/mnt/data/index_issue_in_step1.html")
-html = src.read_text(encoding="utf-8")
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
-# Replace the placeholder confirm handler with the real API transaction + sounds.
-old = '''  // ==========================================================
-  // CONFIRM
+  <title>Oxygen Tank System</title>
+
+  <script src="https://unpkg.com/html5-qrcode"
+          type="text/javascript">
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 18px;
+      background: #f5f7fa;
+      color: #222;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 5px 0 4px;
+      font-size: 26px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 18px;
+    }
+
+    .section {
+      background: white;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    select,
+    input {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 16px;
+      background: white;
+    }
+
+    #reader {
+      width: 100%;
+      margin: 12px auto;
+      background: #111;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .scan-status {
+      text-align: center;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .counter {
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      margin: 12px 0;
+    }
+
+    button {
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .btn-start {
+      background: #198754;
+      color: white;
+    }
+
+    .btn-stop {
+      background: #dc3545;
+      color: white;
+    }
+
+    .btn-clear {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-confirm {
+      background: #0d6efd;
+      color: white;
+      font-size: 17px;
+      margin-top: 14px;
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .tank-list {
+      margin-top: 10px;
+    }
+
+    .tank-card {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 9px;
+      background: #fafafa;
+    }
+
+    .tank-card.success {
+      border-left: 5px solid #198754;
+    }
+
+    .tank-card.error {
+      border-left: 5px solid #dc3545;
+    }
+
+    .tank-id {
+      font-weight: bold;
+      font-size: 17px;
+    }
+
+    .tank-info {
+      color: #555;
+      margin-top: 5px;
+      line-height: 1.5;
+    }
+
+    .message {
+      text-align: center;
+      padding: 12px;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+
+    .message.success {
+      background: #e9f7ef;
+      color: #146c43;
+    }
+
+    .message.error {
+      background: #fcebea;
+      color: #b02a37;
+    }
+
+    .message.info {
+      background: #eef5ff;
+      color: #0a58ca;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>📥 ISSUE IN</h1>
+  <div class="subtitle">Oxygen Tank Management System</div>
+
+  <!-- LOCATION -->
+  <div class="section">
+
+    <label for="fromLocation">
+      KK / FROM LOCATION
+    </label>
+
+    <select id="fromLocation">
+
+      <option value="">
+        -- Select KK --
+      </option>
+
+      <option>KK Batu Lintang</option>
+      <option>KK Batang Ai</option>
+      <option>KK Engkilili</option>
+      <option>KK Lingga</option>
+      <option>KK Lubok Antu</option>
+      <option>KK Merindu</option>
+      <option>KK Nanga Delok</option>
+      <option>KK Nanga Entalau</option>
+      <option>KK Nanga Kesit</option>
+      <option>KK Nanga Patoh</option>
+      <option>KK Nanga Mujau</option>
+      <option>KK Pantu</option>
+      <option>KK Skrang</option>
+      <option>KK Sri Aman</option>
+      <option>KK Stamang</option>
+      <option>KK Tanjung Bijat</option>
+      <option>KK Beladin</option>
+      <option>KK Debak</option>
+      <option>KK Maludam</option>
+      <option>KK MidLayar</option>
+      <option>KK Pusa</option>
+      <option>KK Semarang</option>
+      <option>KK Spaoh</option>
+      <option>KK Tuie</option>
+      <option>KKOM Betong</option>
+      <option>Bahagian Betong</option>
+
+    </select>
+
+  </div>
+
+
+  <!-- SCANNER -->
+  <div class="section">
+
+    <div id="reader"></div>
+
+    <div id="scanStatus"
+         class="scan-status">
+      🔴 Camera not started
+    </div>
+
+    <button
+      id="startButton"
+      class="btn-start">
+      📷 START SCAN
+    </button>
+
+    <button
+      id="stopButton"
+      class="btn-stop"
+      disabled>
+      ⏹ STOP SCAN
+    </button>
+
+  </div>
+
+
+  <!-- COUNTER -->
+  <div class="section">
+
+    <div class="counter">
+      Scanned Tanks:
+      <span id="tankCount">0</span>
+    </div>
+
+    <div id="message"></div>
+
+    <div id="tankList"
+         class="tank-list">
+    </div>
+
+    <button
+      id="clearButton"
+      class="btn-clear"
+      disabled>
+      🗑 CLEAR SCANNED LIST
+    </button>
+
+    <button
+      id="confirmButton"
+      class="btn-confirm"
+      disabled>
+      ✅ CONFIRM ISSUE IN
+    </button>
+
+  </div>
+
+</div>
+
+
+<script>
+
+  // ==========================================================
+  // CONFIGURATION
   // ==========================================================
 
-  confirmButton.addEventListener(
-    "click",
-    function() {
+  const API_URL =
+    "https://script.google.com/macros/s/AKfycbyaFR7ISlx_a7iGOLa7hGCbFAHBbiP-DgOKXIgsIM7BJC9joOJmYOThkim8my9uHEJc/exec";
+
+
+  // ==========================================================
+  // DOM
+  // ==========================================================
+
+  const reader =
+    document.getElementById("reader");
+
+  const scanStatus =
+    document.getElementById("scanStatus");
+
+  const startButton =
+    document.getElementById("startButton");
+
+  const stopButton =
+    document.getElementById("stopButton");
+
+  const clearButton =
+    document.getElementById("clearButton");
+
+  const confirmButton =
+    document.getElementById("confirmButton");
+
+  const tankCount =
+    document.getElementById("tankCount");
+
+  const tankList =
+    document.getElementById("tankList");
+
+  const message =
+    document.getElementById("message");
+
+  const fromLocation =
+    document.getElementById("fromLocation");
+
+
+  // ==========================================================
+  // STATE
+  // ==========================================================
+
+  let html5QrCode = null;
+
+  let cameraRunning = false;
+
+  let lastScanned = "";
+
+  const scannedTanks = new Map();
+
+
+  // ==========================================================
+  // MESSAGE
+  // ==========================================================
+
+  function showMessage(text, type = "info") {
+
+    message.className =
+      "message " + type;
+
+    message.innerHTML =
+      text;
+
+  }
+
+
+  function clearMessage() {
+
+    message.className = "";
+
+    message.innerHTML = "";
+
+  }
+
+
+  // ==========================================================
+  // UPDATE UI
+  // ==========================================================
+
+  function updateUI() {
+
+    const count =
+      scannedTanks.size;
+
+    tankCount.textContent =
+      count;
+
+    clearButton.disabled =
+      count === 0;
+
+    confirmButton.disabled =
+      count === 0 ||
+      !fromLocation.value;
+
+  }
+
+
+  // ==========================================================
+  // RENDER SCANNED TANKS
+  // ==========================================================
+
+  function renderTankList() {
+
+    tankList.innerHTML = "";
+
+    if (scannedTanks.size === 0) {
+
+      tankList.innerHTML =
+        "<div style='text-align:center;color:#888;padding:12px'>" +
+        "No tank scanned yet." +
+        "</div>";
+
+      return;
+
+    }
+
+
+    scannedTanks.forEach(function(tank) {
+
+      const card =
+        document.createElement("div");
+
+      card.className =
+        "tank-card success";
+
+      card.innerHTML = `
+
+        <div class="tank-id">
+          ✅ ${escapeHtml(tank.tankId)}
+        </div>
+
+        <div class="tank-info">
+
+          Barcode:
+          <strong>${escapeHtml(tank.barcode)}</strong>
+          <br>
+
+          Type:
+          ${escapeHtml(tank.tankType)}
+          <br>
+
+          BN / PI:
+          ${escapeHtml(tank.bnPi)}
+          <br>
+
+          Current Location:
+          ${escapeHtml(tank.currentLocation)}
+          <br>
+
+          Status:
+          ${escapeHtml(tank.status)}
+
+        </div>
+
+      `;
+
+      tankList.appendChild(card);
+
+    });
+
+  }
+
+
+  // ==========================================================
+  // ESCAPE HTML
+  // ==========================================================
+
+  function escapeHtml(value) {
+
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+  }
+
+
+  // ==========================================================
+  // FIND TANK FROM API
+  // ==========================================================
+
+  function findTankFromAPI(barcode) {
+
+    return new Promise(function(resolve, reject) {
+
+      const callbackName =
+        "tankCallback_" +
+        Date.now() +
+        "_" +
+        Math.random()
+          .toString(36)
+          .substring(2);
+
+
+      const timeout =
+        setTimeout(function() {
+
+          delete window[callbackName];
+
+          const oldScript =
+            document.getElementById(callbackName);
+
+          if (oldScript) {
+            oldScript.remove();
+          }
+
+          reject(
+            new Error(
+              "API response timeout."
+            )
+          );
+
+        }, 15000);
+
+
+      window[callbackName] =
+        function(data) {
+
+          clearTimeout(timeout);
+
+          delete window[callbackName];
+
+          const oldScript =
+            document.getElementById(callbackName);
+
+          if (oldScript) {
+            oldScript.remove();
+          }
+
+          resolve(data);
+
+        };
+
+
+      const script =
+        document.createElement("script");
+
+      script.id =
+        callbackName;
+
+      script.src =
+        API_URL +
+        "?action=findTank" +
+        "&barcode=" +
+        encodeURIComponent(barcode) +
+        "&callback=" +
+        callbackName;
+
+      script.onerror =
+        function() {
+
+          clearTimeout(timeout);
+
+          delete window[callbackName];
+
+          script.remove();
+
+          reject(
+            new Error(
+              "Unable to connect to server."
+            )
+          );
+
+        };
+
+
+      document.body.appendChild(script);
+
+    });
+
+  }
+
+
+  // ==========================================================
+  // SCAN SUCCESS
+  // ==========================================================
+
+  async function onScanSuccess(decodedText) {
+
+    const barcode =
+      String(decodedText || "").trim();
+
+
+    if (!barcode) {
+      return;
+    }
+
+
+    // Ignore same barcode repeatedly
+    if (
+      scannedTanks.has(barcode) ||
+      barcode === lastScanned
+    ) {
+
+      return;
+
+    }
+
+
+    lastScanned =
+      barcode;
+
+
+    // Require location first
+    if (!fromLocation.value) {
+
+      initAudio();
+      playErrorSound();
 
       showMessage(
-        "ℹ️ CONFIRM ISSUE IN backend will be connected in the next step.<br><br>" +
-        "The scanned list is currently temporary and has NOT changed TANK DB.",
+        "⚠️ Please select KK / FROM LOCATION first.",
+        "error"
+      );
+
+      lastScanned = "";
+
+      return;
+
+    }
+
+
+    showMessage(
+      "🔎 Checking TANK DB...<br><strong>" +
+      escapeHtml(barcode) +
+      "</strong>",
+      "info"
+    );
+
+
+    try {
+
+      const data =
+        await findTankFromAPI(barcode);
+
+
+      if (!data.success) {
+
+        playErrorSound();
+
+        showMessage(
+          "❌ UNKNOWN TANK<br><br>" +
+          "Barcode: <strong>" +
+          escapeHtml(barcode) +
+          "</strong><br>" +
+          "This tank is not in TANK DB.",
+          "error"
+        );
+
+        lastScanned = "";
+
+        return;
+
+      }
+
+
+      // ------------------------------------------------------
+      // FRONT-END VALIDATION
+      // ------------------------------------------------------
+
+      if (
+        String(data.currentLocation || "")
+          .toUpperCase() !==
+        fromLocation.value.toUpperCase()
+      ) {
+
+        playErrorSound();
+
+        showMessage(
+          "❌ LOCATION MISMATCH<br><br>" +
+          "Barcode: <strong>" +
+          escapeHtml(barcode) +
+          "</strong><br>" +
+          "Current: " +
+          escapeHtml(data.currentLocation) +
+          "<br>" +
+          "Expected: " +
+          escapeHtml(fromLocation.value),
+          "error"
+        );
+
+        lastScanned = "";
+
+        return;
+
+      }
+
+
+      if (
+        String(data.currentLocation || "")
+          .toUpperCase() === "PFBSA"
+      ) {
+
+        playErrorSound();
+
+        showMessage(
+          "❌ TANK ALREADY IN PFBSA",
+          "error"
+        );
+
+        lastScanned = "";
+
+        return;
+
+      }
+
+
+      // ------------------------------------------------------
+      // ADD TO TEMPORARY SCAN LIST
+      // ------------------------------------------------------
+
+      scannedTanks.set(
+        barcode,
+        data
+      );
+
+
+      playScanSuccessSound();
+
+
+      renderTankList();
+
+      updateUI();
+
+
+      showMessage(
+        "✅ Tank added to scan list.<br>" +
+        "You can continue scanning.",
+        "success"
+      );
+
+
+      // Allow next scan
+      setTimeout(function() {
+
+        lastScanned = "";
+
+      }, 500);
+
+
+    }
+
+    catch (error) {
+
+      console.error(error);
+
+      showMessage(
+        "❌ Server connection failed.<br><br>" +
+        escapeHtml(error.message),
+        "error"
+      );
+
+      lastScanned = "";
+
+    }
+
+  }
+
+
+  // ==========================================================
+  // SCAN FAILURE
+  // ==========================================================
+
+  function onScanFailure(error) {
+
+    // Normal continuous scanning failures are ignored.
+
+  }
+
+
+  // ==========================================================
+  // START CAMERA
+  // ==========================================================
+
+  async function startScanner() {
+
+    if (cameraRunning) {
+      return;
+    }
+
+
+    if (!fromLocation.value) {
+
+      showMessage(
+        "⚠️ Please select KK / FROM LOCATION first.",
+        "error"
+      );
+
+      return;
+
+    }
+
+
+    try {
+
+      if (!html5QrCode) {
+
+        html5QrCode =
+          new Html5Qrcode("reader");
+
+      }
+
+
+      const devices =
+        await Html5Qrcode.getCameras();
+
+
+      if (
+        !devices ||
+        devices.length === 0
+      ) {
+
+        showMessage(
+          "❌ No camera found.",
+          "error"
+        );
+
+        return;
+
+      }
+
+
+      let cameraId =
+        devices[devices.length - 1].id;
+
+
+      for (
+        const device of devices
+      ) {
+
+        const label =
+          String(device.label || "")
+            .toLowerCase();
+
+
+        if (
+          label.includes("back") ||
+          label.includes("rear") ||
+          label.includes("environment")
+        ) {
+
+          cameraId =
+            device.id;
+
+          break;
+
+        }
+
+      }
+
+
+      const config = {
+
+        fps: 10,
+
+        qrbox: {
+          width: 280,
+          height: 150
+        },
+
+        rememberLastUsedCamera: true
+
+      };
+
+
+      await html5QrCode.start(
+        cameraId,
+        config,
+        onScanSuccess,
+        onScanFailure
+      );
+
+
+      cameraRunning = true;
+
+      startButton.disabled = true;
+
+      stopButton.disabled = false;
+
+      scanStatus.innerHTML =
+        "🟢 Camera scanning continuously";
+
+
+      showMessage(
+        "📷 Scanner ready. Keep scanning tanks.",
         "info"
       );
 
     }
-  );'''
 
-new = r'''  // ==========================================================
+    catch (error) {
+
+      console.error(error);
+
+      showMessage(
+        "❌ Camera failed to start.<br><br>" +
+        escapeHtml(error.message),
+        "error"
+      );
+
+    }
+
+  }
+
+
+  // ==========================================================
+  // STOP CAMERA
+  // ==========================================================
+
+  async function stopScanner() {
+
+    if (
+      !html5QrCode ||
+      !cameraRunning
+    ) {
+
+      return;
+
+    }
+
+
+    try {
+
+      await html5QrCode.stop();
+
+      cameraRunning = false;
+
+      startButton.disabled = false;
+
+      stopButton.disabled = true;
+
+      scanStatus.innerHTML =
+        "🔴 Camera stopped";
+
+    }
+
+    catch (error) {
+
+      console.error(error);
+
+    }
+
+  }
+
+
+  // ==========================================================
+  // CLEAR LIST
+  // ==========================================================
+
+  function clearScannedList() {
+
+    if (scannedTanks.size === 0) {
+      return;
+    }
+
+
+    if (
+      !confirm(
+        "Clear all scanned tanks?"
+      )
+    ) {
+
+      return;
+
+    }
+
+
+    scannedTanks.clear();
+
+    renderTankList();
+
+    updateUI();
+
+    clearMessage();
+
+    lastScanned = "";
+
+  }
+
+
+  // ==========================================================
+  // LOCATION CHANGE
+  // ==========================================================
+
+  fromLocation.addEventListener(
+    "change",
+    function() {
+
+      // Changing KK after scanning could make
+      // the temporary list invalid.
+      if (scannedTanks.size > 0) {
+
+        const proceed =
+          confirm(
+            "Changing KK will clear the scanned list. Continue?"
+          );
+
+        if (!proceed) {
+
+          // We cannot reliably restore the previous
+          // select value without storing it.
+          // Keep current selection but warn user.
+          return;
+
+        }
+
+        scannedTanks.clear();
+
+        renderTankList();
+
+        lastScanned = "";
+
+      }
+
+      updateUI();
+
+      clearMessage();
+
+    }
+  );
+
+
+  // ==========================================================
+  // BUTTONS
+  // ==========================================================
+
+  startButton.addEventListener(
+    "click",
+    startScanner
+  );
+
+
+  stopButton.addEventListener(
+    "click",
+    stopScanner
+  );
+
+
+  clearButton.addEventListener(
+    "click",
+    clearScannedList
+  );
+
+
+  // ==========================================================
   // AUDIO FEEDBACK
   // ==========================================================
 
@@ -556,123 +1583,18 @@ new = r'''  // ==========================================================
 
     },
     { once: false }
-  );'''
-
-if old not in html:
-    raise RuntimeError("Could not find old CONFIRM block.")
-
-html = html.replace(old, new)
-
-# Add success sound when a tank is accepted.
-needle = '''      scannedTanks.set(
-        barcode,
-        data
-      );
+  );
 
 
-      renderTankList();'''
+  // ==========================================================
+  // INITIAL UI
+  // ==========================================================
 
-replacement = '''      scannedTanks.set(
-        barcode,
-        data
-      );
+  renderTankList();
 
+  updateUI();
 
-      playScanSuccessSound();
+</script>
 
-
-      renderTankList();'''
-
-if needle not in html:
-    raise RuntimeError("Could not find scan acceptance block.")
-
-html = html.replace(needle, replacement)
-
-# Add error sound at the major scan validation failure points.
-html = html.replace(
-'''        showMessage(
-          "❌ UNKNOWN TANK<br><br>" +
-          "Barcode: <strong>" +
-          escapeHtml(barcode) +
-          "</strong><br>" +
-          "This tank is not in TANK DB.",
-          "error"
-        );''',
-'''        playErrorSound();
-
-        showMessage(
-          "❌ UNKNOWN TANK<br><br>" +
-          "Barcode: <strong>" +
-          escapeHtml(barcode) +
-          "</strong><br>" +
-          "This tank is not in TANK DB.",
-          "error"
-        );'''
-)
-
-html = html.replace(
-'''        showMessage(
-          "❌ LOCATION MISMATCH<br><br>" +
-          "Barcode: <strong>" +
-          escapeHtml(barcode) +
-          "</strong><br>" +
-          "Current: " +
-          escapeHtml(data.currentLocation) +
-          "<br>" +
-          "Expected: " +
-          escapeHtml(fromLocation.value),
-          "error"
-        );''',
-'''        playErrorSound();
-
-        showMessage(
-          "❌ LOCATION MISMATCH<br><br>" +
-          "Barcode: <strong>" +
-          escapeHtml(barcode) +
-          "</strong><br>" +
-          "Current: " +
-          escapeHtml(data.currentLocation) +
-          "<br>" +
-          "Expected: " +
-          escapeHtml(fromLocation.value),
-          "error"
-        );'''
-)
-
-html = html.replace(
-'''        showMessage(
-          "❌ TANK ALREADY IN PFBSA",
-          "error"
-        );''',
-'''        playErrorSound();
-
-        showMessage(
-          "❌ TANK ALREADY IN PFBSA",
-          "error"
-        );'''
-)
-
-# If user tries to scan before choosing location, initialize audio and error tone.
-html = html.replace(
-'''    if (!fromLocation.value) {
-
-      showMessage(
-        "⚠️ Please select KK / FROM LOCATION first.",
-        "error"
-      );''',
-'''    if (!fromLocation.value) {
-
-      initAudio();
-      playErrorSound();
-
-      showMessage(
-        "⚠️ Please select KK / FROM LOCATION first.",
-        "error"
-      );''',
-1
-)
-
-out = Path("/mnt/data/index_issue_in_step2_confirm_sound.html")
-out.write_text(html, encoding="utf-8")
-print(f"已生成：{out}")
-print(f"文件大小：{out.stat().st_size} bytes")
+</body>
+</html>
