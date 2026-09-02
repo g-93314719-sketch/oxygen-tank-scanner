@@ -769,6 +769,16 @@ h3,
 }
 </style>
 
+
+  <!-- PWA -->
+  <meta name="theme-color" content="#050505">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Oxygen Tank">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+
 </head>
 
 <body>
@@ -2867,6 +2877,22 @@ h3,
 <footer id="ghhmCopyrightFooter" aria-label="Copyright">
   HAK MILIK © GHHM PFBSA
 </footer>
+
+
+  <script>
+    // PWA Service Worker
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js")
+          .then(registration => {
+            console.log("PWA Service Worker registered:", registration.scope);
+          })
+          .catch(error => {
+            console.warn("PWA Service Worker registration failed:", error);
+          });
+      });
+    }
+  </script>
 
 </body>
 </html>
