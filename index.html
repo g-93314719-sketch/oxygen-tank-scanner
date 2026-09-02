@@ -189,13 +189,28 @@
 
 <div class="container">
 
-  <h1>📥 ISSUE IN</h1>
+  <h1 id="pageTitle">📥 ISSUE IN</h1>
   <div class="subtitle">Oxygen Tank Management System</div>
+
+  <!-- ACTION MODE -->
+  <div class="section">
+    <label>ACTION</label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <button id="issueInModeButton" type="button"
+              style="margin-top:0;background:#198754;color:white;">
+        📥 ISSUE IN
+      </button>
+      <button id="issueOutModeButton" type="button"
+              style="margin-top:0;background:#e9ecef;color:#333;">
+        📤 ISSUE OUT
+      </button>
+    </div>
+  </div>
 
   <!-- LOCATION -->
   <div class="section">
 
-    <label for="fromLocation">
+    <label for="fromLocation" id="locationLabel">
       KK / FROM LOCATION
     </label>
 
@@ -340,6 +355,18 @@
   const fromLocation =
     document.getElementById("fromLocation");
 
+  const pageTitle =
+    document.getElementById("pageTitle");
+
+  const locationLabel =
+    document.getElementById("locationLabel");
+
+  const issueInModeButton =
+    document.getElementById("issueInModeButton");
+
+  const issueOutModeButton =
+    document.getElementById("issueOutModeButton");
+
 
   // ==========================================================
   // STATE
@@ -350,6 +377,8 @@
   let cameraRunning = false;
 
   let lastScanned = "";
+
+  let actionMode = "ISSUE IN";
 
   const scannedTanks = new Map();
 
@@ -664,50 +693,92 @@
       // FRONT-END VALIDATION
       // ------------------------------------------------------
 
-      if (
-        String(data.currentLocation || "")
-          .toUpperCase() !==
-        fromLocation.value.toUpperCase()
-      ) {
+      const currentLocation =
+        String(data.currentLocation || "").trim();
 
-        playErrorSound();
+      const currentStatus =
+        String(data.status || "").trim();
 
-        showMessage(
-          "❌ LOCATION MISMATCH<br><br>" +
-          "Barcode: <strong>" +
-          escapeHtml(barcode) +
-          "</strong><br>" +
-          "Current: " +
-          escapeHtml(data.currentLocation) +
-          "<br>" +
-          "Expected: " +
-          escapeHtml(fromLocation.value),
-          "error"
-        );
+      if (actionMode === "ISSUE IN") {
 
-        lastScanned = "";
+        // ISSUE IN: KK → PFBSA
+        if (
+          currentLocation.toUpperCase() !==
+          fromLocation.value.toUpperCase()
+        ) {
 
-        return;
+          playErrorSound();
 
-      }
+          showMessage(
+            "❌ LOCATION MISMATCH<br><br>" +
+            "Barcode: <strong>" +
+            escapeHtml(barcode) +
+            "</strong><br>" +
+            "Current: " +
+            escapeHtml(currentLocation) +
+            "<br>" +
+            "Expected: " +
+            escapeHtml(fromLocation.value),
+            "error"
+          );
 
+          lastScanned = "";
+          return;
+        }
 
-      if (
-        String(data.currentLocation || "")
-          .toUpperCase() === "PFBSA"
-      ) {
+        if (currentLocation.toUpperCase() === "PFBSA") {
 
-        playErrorSound();
+          playErrorSound();
 
-        showMessage(
-          "❌ TANK ALREADY IN PFBSA",
-          "error"
-        );
+          showMessage(
+            "❌ TANK ALREADY IN PFBSA",
+            "error"
+          );
 
-        lastScanned = "";
+          lastScanned = "";
+          return;
+        }
 
-        return;
+      } else {
 
+        // ISSUE OUT: PFBSA → KK
+        if (currentLocation.toUpperCase() !== "PFBSA") {
+
+          playErrorSound();
+
+          showMessage(
+            "❌ TANK NOT IN PFBSA<br><br>" +
+            "Barcode: <strong>" +
+            escapeHtml(barcode) +
+            "</strong><br>" +
+            "Current Location: " +
+            escapeHtml(currentLocation) +
+            "<br><br>" +
+            "ISSUE OUT requires the tank to be in PFBSA.",
+            "error"
+          );
+
+          lastScanned = "";
+          return;
+        }
+
+        if (currentStatus.toUpperCase() !== "AVAILABLE") {
+
+          playErrorSound();
+
+          showMessage(
+            "❌ TANK NOT AVAILABLE<br><br>" +
+            "Barcode: <strong>" +
+            escapeHtml(barcode) +
+            "</strong><br>" +
+            "Status: " +
+            escapeHtml(currentStatus),
+            "error"
+          );
+
+          lastScanned = "";
+          return;
+        }
       }
 
 
@@ -1366,11 +1437,10 @@
 
 
   // ==========================================================
-  // CONFIRM ISSUE IN
+  // CONFIRM TRANSACTION
   // ==========================================================
 
   let confirmProcessing = false;
-
 
   confirmButton.addEventListener(
     "click",
@@ -1380,193 +1450,232 @@
         return;
       }
 
-
-      const location =
-        fromLocation.value;
-
-
-      const barcodes =
-        Array.from(
-          scannedTanks.keys()
-        );
-
+      const location = fromLocation.value;
+      const barcodes = Array.from(scannedTanks.keys());
 
       if (!location) {
-
         playErrorSound();
-
         showMessage(
-          "⚠️ Please select KK / FROM LOCATION first.",
+          "⚠️ Please select KK / LOCATION first.",
           "error"
         );
-
         return;
-
       }
 
-
       if (barcodes.length === 0) {
-
         playErrorSound();
-
         showMessage(
           "⚠️ No tanks scanned.",
           "error"
         );
-
-        return;
-
-      }
-
-
-      const confirmed =
-        confirm(
-          "Confirm ISSUE IN for " +
-          barcodes.length +
-          " tank(s)?\n\n" +
-          location +
-          " → PFBSA"
-        );
-
-
-      if (!confirmed) {
         return;
       }
 
+      const actionText =
+        actionMode === "ISSUE IN" ? "ISSUE IN" : "ISSUE OUT";
+
+      const directionText =
+        actionMode === "ISSUE IN"
+          ? location + " → PFBSA"
+          : "PFBSA → " + location;
+
+      if (!confirm(
+        "Confirm " + actionText +
+        " for " + barcodes.length +
+        " tank(s)?\n\n" +
+        directionText
+      )) {
+        return;
+      }
 
       confirmProcessing = true;
-
       confirmButton.disabled = true;
-
       clearButton.disabled = true;
-
       stopButton.disabled = true;
-
+      issueInModeButton.disabled = true;
+      issueOutModeButton.disabled = true;
 
       showMessage(
-        "⏳ Processing ISSUE IN...<br>" +
-        "Please do not close this page.",
+        "⏳ Processing " + actionText +
+        "...<br>Please do not close this page.",
         "info"
       );
 
-
       const payload = {
-
-        action: "ISSUE IN",
-
-        date:
-          new Date()
-            .toISOString()
-            .substring(0, 10),
-
-        fromLocation:
-          location,
-
-        barcodes:
-          barcodes,
-
-        user:
-          "MOBILE",
-
-        remark:
-          ""
-
+        action: actionText,
+        date: new Date().toISOString().substring(0, 10),
+        barcodes: barcodes,
+        user: "MOBILE",
+        remark: ""
       };
 
+      if (actionMode === "ISSUE IN") {
+        payload.fromLocation = location;
+      } else {
+        payload.toLocation = location;
+      }
 
       try {
 
+        const apiAction =
+          actionMode === "ISSUE IN" ? "issueIn" : "issueOut";
+
+        const callbackPrefix =
+          actionMode === "ISSUE IN"
+            ? "issueInCallback"
+            : "issueOutCallback";
+
         const apiUrl =
           API_URL +
-          "?action=issueIn" +
+          "?action=" + apiAction +
           "&data=" +
-          encodeURIComponent(
-            JSON.stringify(payload)
-          );
+          encodeURIComponent(JSON.stringify(payload));
 
-
-        const result =
-          await callJsonp(
-            apiUrl,
-            "issueInCallback",
-            30000
-          );
-
-
-        console.log(
-          "ISSUE IN response:",
-          result
+        const result = await callJsonp(
+          apiUrl,
+          callbackPrefix,
+          30000
         );
 
+        console.log(actionText + " response:", result);
 
         if (!result.success) {
 
           playErrorSound();
 
+          let errorDetails = "";
+
+          if (Array.isArray(result.errors) && result.errors.length > 0) {
+            errorDetails =
+              "<br><br>" +
+              result.errors.map(function(item) {
+                return "• " +
+                  escapeHtml(item.barcode) +
+                  ": " +
+                  escapeHtml(item.reason);
+              }).join("<br>");
+          }
+
           showMessage(
-            "❌ ISSUE IN FAILED<br><br>" +
-            escapeHtml(
-              result.message ||
-              "Transaction failed."
-            ),
+            "❌ " + actionText + " FAILED<br><br>" +
+            escapeHtml(result.message || "Transaction failed.") +
+            errorDetails,
             "error"
           );
 
           confirmProcessing = false;
-
+          issueInModeButton.disabled = false;
+          issueOutModeButton.disabled = false;
           updateUI();
-
           return;
-
         }
-
-
-        // ----------------------------------------------------
-        // SUCCESS
-        // ----------------------------------------------------
 
         playConfirmSuccessSound();
 
-
         showMessage(
-          "🎉 <strong>ISSUE IN SUCCESSFUL!</strong><br><br>" +
+          "🎉 <strong>" + actionText +
+          " SUCCESSFUL!</strong><br><br>" +
           result.totalTanks +
           " tank(s) recorded.<br><br>" +
-          escapeHtml(location) +
-          " → <strong>PFBSA</strong>",
+          escapeHtml(directionText),
           "success"
         );
 
-
         scannedTanks.clear();
-
         renderTankList();
-
         updateUI();
-
         lastScanned = "";
 
+        confirmProcessing = false;
+        issueInModeButton.disabled = false;
+        issueOutModeButton.disabled = false;
 
-      }
-
-      catch (error) {
+      } catch (error) {
 
         console.error(error);
-
         playErrorSound();
 
         showMessage(
-          "❌ Unable to submit ISSUE IN.<br><br>" +
+          "❌ Unable to submit " +
+          actionText + ".<br><br>" +
           escapeHtml(error.message),
           "error"
         );
 
         confirmProcessing = false;
-
+        issueInModeButton.disabled = false;
+        issueOutModeButton.disabled = false;
         updateUI();
+      }
+    }
+  );
 
+
+  // ==========================================================
+  // ACTION MODE
+  // ==========================================================
+
+  function setActionMode(mode) {
+
+    if (confirmProcessing) {
+      return;
+    }
+
+    if (scannedTanks.size > 0) {
+
+      if (!confirm(
+        "Changing ACTION will clear the scanned list. Continue?"
+      )) {
+        return;
       }
 
+      scannedTanks.clear();
+      renderTankList();
+      lastScanned = "";
+    }
+
+    actionMode = mode;
+
+    if (actionMode === "ISSUE IN") {
+
+      pageTitle.textContent = "📥 ISSUE IN";
+      locationLabel.textContent = "KK / FROM LOCATION";
+      confirmButton.textContent = "✅ CONFIRM ISSUE IN";
+
+      issueInModeButton.style.background = "#198754";
+      issueInModeButton.style.color = "white";
+
+      issueOutModeButton.style.background = "#e9ecef";
+      issueOutModeButton.style.color = "#333";
+
+    } else {
+
+      pageTitle.textContent = "📤 ISSUE OUT";
+      locationLabel.textContent = "KK / TO LOCATION";
+      confirmButton.textContent = "✅ CONFIRM ISSUE OUT";
+
+      issueOutModeButton.style.background = "#0d6efd";
+      issueOutModeButton.style.color = "white";
+
+      issueInModeButton.style.background = "#e9ecef";
+      issueInModeButton.style.color = "#333";
+    }
+
+    updateUI();
+    clearMessage();
+  }
+
+  issueInModeButton.addEventListener(
+    "click",
+    function() {
+      setActionMode("ISSUE IN");
+    }
+  );
+
+  issueOutModeButton.addEventListener(
+    "click",
+    function() {
+      setActionMode("ISSUE OUT");
     }
   );
 
