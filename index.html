@@ -179,6 +179,64 @@
       color: #0a58ca;
     }
 
+    .inventory-location {
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      margin-top: 10px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .inventory-location-header {
+      padding: 13px;
+      background: #f8f9fa;
+      cursor: pointer;
+    }
+
+    .inventory-location-title {
+      font-size: 17px;
+      font-weight: bold;
+    }
+
+    .inventory-stats {
+      margin-top: 5px;
+      color: #666;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .inventory-tanks {
+      display: none;
+      padding: 8px 10px 4px;
+      border-top: 1px solid #eee;
+    }
+
+    .inventory-tanks.open {
+      display: block;
+    }
+
+    .inventory-tank {
+      padding: 10px 4px;
+      border-bottom: 1px solid #eee;
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    .inventory-tank:last-child {
+      border-bottom: none;
+    }
+
+    .inventory-badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: #eef5ff;
+      color: #0a58ca;
+      font-size: 12px;
+      font-weight: bold;
+      margin-left: 4px;
+    }
+
     .hidden {
       display: none;
     }
@@ -195,7 +253,7 @@
   <!-- ACTION MODE -->
   <div class="section">
     <label>ACTION</label>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
       <button id="issueInModeButton" type="button"
               style="margin-top:0;background:#198754;color:white;">
         📥 ISSUE IN
@@ -203,6 +261,10 @@
       <button id="issueOutModeButton" type="button"
               style="margin-top:0;background:#e9ecef;color:#333;">
         📤 ISSUE OUT
+      </button>
+      <button id="inventoryModeButton" type="button"
+              style="margin-top:0;background:#e9ecef;color:#333;">
+        📊 INVENTORY
       </button>
     </div>
   </div>
@@ -249,6 +311,31 @@
 
     </select>
 
+  </div>
+
+
+  <!-- INVENTORY -->
+  <div id="inventorySection" class="section hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+      <div>
+        <div style="font-size:20px;font-weight:bold;">📊 CURRENT INVENTORY</div>
+        <div style="font-size:13px;color:#777;margin-top:3px;">
+          Live data from TANK DB
+        </div>
+      </div>
+      <button id="refreshInventoryButton"
+              type="button"
+              style="width:auto;margin-top:0;background:#0d6efd;color:white;padding:10px 14px;">
+        🔄 Refresh
+      </button>
+    </div>
+
+    <div id="inventorySummary"
+         style="margin-top:14px;text-align:center;font-weight:bold;color:#555;">
+      Loading inventory...
+    </div>
+
+    <div id="inventoryList" style="margin-top:12px;"></div>
   </div>
 
 
@@ -366,6 +453,26 @@
 
   const issueOutModeButton =
     document.getElementById("issueOutModeButton");
+
+  const inventoryModeButton =
+    document.getElementById("inventoryModeButton");
+
+  const inventorySection =
+    document.getElementById("inventorySection");
+
+  const scannerSections =
+    Array.from(document.querySelectorAll(".section")).filter(function(section) {
+      return section !== inventorySection;
+    });
+
+  const refreshInventoryButton =
+    document.getElementById("refreshInventoryButton");
+
+  const inventorySummary =
+    document.getElementById("inventorySummary");
+
+  const inventoryList =
+    document.getElementById("inventoryList");
 
 
   // ==========================================================
@@ -1437,6 +1544,162 @@
 
 
   // ==========================================================
+  // INVENTORY
+  // ==========================================================
+
+  let inventoryLoading = false;
+
+  function getInventoryFromAPI() {
+    return callJsonp(
+      API_URL + "?action=getInventory",
+      "inventoryCallback",
+      30000
+    );
+  }
+
+  function renderInventory(data) {
+    inventoryList.innerHTML = "";
+
+    if (!data || !data.success) {
+      inventorySummary.textContent =
+        "❌ Unable to load inventory.";
+      return;
+    }
+
+    inventorySummary.innerHTML =
+      "Total Tanks: <strong>" + escapeHtml(data.totalTanks) +
+      "</strong> &nbsp; | &nbsp; Locations: <strong>" +
+      escapeHtml(data.totalLocations) + "</strong>";
+
+    if (!Array.isArray(data.locations) || data.locations.length === 0) {
+      inventoryList.innerHTML =
+        "<div style='text-align:center;color:#888;padding:15px'>" +
+        "No inventory data found." +
+        "</div>";
+      return;
+    }
+
+    data.locations.forEach(function(location, index) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "inventory-location";
+
+      const header = document.createElement("div");
+      header.className = "inventory-location-header";
+
+      header.innerHTML =
+        "<div class='inventory-location-title'>" +
+        escapeHtml(location.location) +
+        "</div>" +
+        "<div class='inventory-stats'>" +
+        "Total: <strong>" + escapeHtml(location.total) + "</strong>" +
+        " &nbsp; | &nbsp; Available: <strong>" +
+        escapeHtml(location.available) + "</strong>" +
+        " &nbsp; | &nbsp; Holding: <strong>" +
+        escapeHtml(location.holding) + "</strong>" +
+        "</div>" +
+        "<div style='font-size:12px;color:#888;margin-top:5px;'>" +
+        "Tap to " + (index === 0 ? "view tanks" : "view tanks") +
+        " ▼" +
+        "</div>";
+
+      const tanksDiv = document.createElement("div");
+      tanksDiv.className = "inventory-tanks" +
+        (index === 0 ? " open" : "");
+
+      if (Array.isArray(location.tanks)) {
+        location.tanks.forEach(function(tank) {
+          const tankDiv = document.createElement("div");
+          tankDiv.className = "inventory-tank";
+
+          tankDiv.innerHTML =
+            "<strong>" + escapeHtml(tank.tankId) + "</strong>" +
+            " <span class='inventory-badge'>" +
+            escapeHtml(tank.status) +
+            "</span><br>" +
+            "Barcode: " + escapeHtml(tank.barcode) +
+            "<br>" +
+            "Type: " + escapeHtml(tank.tankType) +
+            " &nbsp; | &nbsp; BN / PI: " +
+            escapeHtml(tank.bnPi) +
+            "<br>" +
+            "Rujukan PFB: " +
+            escapeHtml(tank.rujukanPfb);
+
+          tanksDiv.appendChild(tankDiv);
+        });
+      }
+
+      header.addEventListener("click", function() {
+        tanksDiv.classList.toggle("open");
+      });
+
+      wrapper.appendChild(header);
+      wrapper.appendChild(tanksDiv);
+      inventoryList.appendChild(wrapper);
+    });
+  }
+
+  async function loadInventory() {
+    if (inventoryLoading) return;
+
+    inventoryLoading = true;
+    inventorySummary.textContent = "⏳ Loading inventory...";
+    inventoryList.innerHTML = "";
+
+    try {
+      const data = await getInventoryFromAPI();
+      renderInventory(data);
+    } catch (error) {
+      console.error(error);
+      inventorySummary.innerHTML =
+        "❌ Inventory connection failed.<br>" +
+        escapeHtml(error.message);
+    } finally {
+      inventoryLoading = false;
+    }
+  }
+
+  function showInventory() {
+    if (cameraRunning) {
+      stopScanner();
+    }
+
+    inventorySection.classList.remove("hidden");
+
+    document.querySelectorAll(".section").forEach(function(section) {
+      if (section !== inventorySection) {
+        section.classList.add("hidden");
+      }
+    });
+
+    pageTitle.textContent = "📊 INVENTORY";
+
+    issueInModeButton.style.background = "#e9ecef";
+    issueInModeButton.style.color = "#333";
+
+    issueOutModeButton.style.background = "#e9ecef";
+    issueOutModeButton.style.color = "#333";
+
+    inventoryModeButton.style.background = "#0d6efd";
+    inventoryModeButton.style.color = "white";
+
+    loadInventory();
+  }
+
+  function showTransactionMode() {
+    inventorySection.classList.add("hidden");
+
+    document.querySelectorAll(".section").forEach(function(section) {
+      if (section !== inventorySection) {
+        section.classList.remove("hidden");
+      }
+    });
+
+    inventoryModeButton.style.background = "#e9ecef";
+    inventoryModeButton.style.color = "#333";
+  }
+
+  // ==========================================================
   // CONFIRM TRANSACTION
   // ==========================================================
 
@@ -1634,6 +1897,7 @@
       lastScanned = "";
     }
 
+    showTransactionMode();
     actionMode = mode;
 
     if (actionMode === "ISSUE IN") {
@@ -1676,6 +1940,20 @@
     "click",
     function() {
       setActionMode("ISSUE OUT");
+    }
+  );
+
+  inventoryModeButton.addEventListener(
+    "click",
+    function() {
+      showInventory();
+    }
+  );
+
+  refreshInventoryButton.addEventListener(
+    "click",
+    function() {
+      loadInventory();
     }
   );
 
