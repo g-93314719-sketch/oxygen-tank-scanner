@@ -237,6 +237,66 @@
       margin-left: 4px;
     }
 
+    .trace-card {
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 12px;
+      background: #fff;
+    }
+
+    .trace-header {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 13px;
+      line-height: 1.55;
+    }
+
+    .trace-timeline {
+      margin-top: 12px;
+    }
+
+    .trace-record {
+      position: relative;
+      border-left: 3px solid #0d6efd;
+      padding: 0 0 16px 14px;
+      margin-left: 5px;
+    }
+
+    .trace-record:last-child {
+      border-left-color: transparent;
+      padding-bottom: 0;
+    }
+
+    .trace-record-title {
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .trace-record-detail {
+      margin-top: 5px;
+      color: #555;
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .trace-action {
+      display: inline-block;
+      margin-left: 5px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #eef5ff;
+      color: #0a58ca;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .trace-empty {
+      text-align: center;
+      color: #888;
+      padding: 15px;
+    }
+
     .hidden {
       display: none;
     }
@@ -253,7 +313,7 @@
   <!-- ACTION MODE -->
   <div class="section">
     <label>ACTION</label>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;">
       <button id="issueInModeButton" type="button"
               style="margin-top:0;background:#198754;color:white;">
         📥 ISSUE IN
@@ -265,6 +325,10 @@
       <button id="inventoryModeButton" type="button"
               style="margin-top:0;background:#e9ecef;color:#333;">
         📊 INVENTORY
+      </button>
+      <button id="traceModeButton" type="button"
+              style="margin-top:0;background:#e9ecef;color:#333;">
+        🔎 TRACE
       </button>
     </div>
   </div>
@@ -336,6 +400,18 @@
     </div>
 
     <div id="inventoryList" style="margin-top:12px;"></div>
+  </div>
+
+
+  <!-- TANK TRACE -->
+  <div id="traceSection" class="section hidden">
+    <div style="font-size:20px;font-weight:bold;">🔎 TANK TRACE</div>
+    <div style="font-size:13px;color:#777;margin-top:3px;">
+      Scan a tank to view its complete movement history
+    </div>
+
+    <div id="traceSummary" style="margin-top:14px;"></div>
+    <div id="traceHistory"></div>
   </div>
 
 
@@ -457,6 +533,18 @@
   const inventoryModeButton =
     document.getElementById("inventoryModeButton");
 
+  const traceModeButton =
+    document.getElementById("traceModeButton");
+
+  const traceSection =
+    document.getElementById("traceSection");
+
+  const traceSummary =
+    document.getElementById("traceSummary");
+
+  const traceHistory =
+    document.getElementById("traceHistory");
+
   const inventorySection =
     document.getElementById("inventorySection");
 
@@ -488,6 +576,9 @@
   let actionMode = "ISSUE IN";
 
   const scannedTanks = new Map();
+
+  let traceMode = false;
+  let traceLoading = false;
 
 
   // ==========================================================
@@ -719,6 +810,11 @@
   // ==========================================================
 
   async function onScanSuccess(decodedText) {
+
+    if (traceMode) {
+      await traceScanSuccess(decodedText);
+      return;
+    }
 
     const barcode =
       String(decodedText || "").trim();
@@ -963,7 +1059,7 @@
     }
 
 
-    if (!fromLocation.value) {
+    if (!traceMode && !fromLocation.value) {
 
       showMessage(
         "⚠️ Please select KK / FROM LOCATION first.",
@@ -1544,6 +1640,293 @@
 
 
   // ==========================================================
+  // TANK TRACE
+  // ==========================================================
+
+  function getTankTraceFromAPI(barcode) {
+    return callJsonp(
+      API_URL +
+      "?action=tankTrace&barcode=" +
+      encodeURIComponent(barcode),
+      "tankTraceCallback",
+      30000
+    );
+  }
+
+  function formatTraceDate(value) {
+    if (!value) return "";
+
+    const d = new Date(value);
+
+    if (isNaN(d.getTime())) {
+      return String(value);
+    }
+
+    return new Intl.DateTimeFormat(
+      "en-GB",
+      {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+      }
+    ).format(d);
+  }
+
+  function formatTraceTime(value) {
+    if (!value) return "";
+
+    const d = new Date(value);
+
+    if (isNaN(d.getTime())) {
+      return String(value);
+    }
+
+    return new Intl.DateTimeFormat(
+      "en-MY",
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true
+      }
+    ).format(d);
+  }
+
+  function renderTankTrace(data) {
+
+    traceSummary.innerHTML = "";
+    traceHistory.innerHTML = "";
+
+    if (!data || !data.success) {
+
+      traceSummary.innerHTML =
+        "<div class='message error'>" +
+        "❌ " +
+        escapeHtml(
+          data && data.message
+            ? data.message
+            : "Unable to load tank trace."
+        ) +
+        "</div>";
+
+      return;
+    }
+
+    const tank = data.tank || {};
+    const history = Array.isArray(data.history)
+      ? data.history
+      : [];
+
+    const summary = document.createElement("div");
+    summary.className = "trace-card";
+
+    summary.innerHTML =
+      "<div class='trace-header'>" +
+        "<div style='font-size:20px;font-weight:bold;'>" +
+          "🛢️ " + escapeHtml(tank.tankId) +
+        "</div>" +
+        "<div style='margin-top:6px;'>Barcode: <strong>" +
+          escapeHtml(tank.barcode) +
+        "</strong></div>" +
+        "<div>Type: <strong>" +
+          escapeHtml(tank.tankType) +
+        "</strong> &nbsp; | &nbsp; BN / PI: <strong>" +
+          escapeHtml(tank.bnPi) +
+        "</strong></div>" +
+        "<div>Rujukan PFB: <strong>" +
+          escapeHtml(tank.rujukanPfb) +
+        "</strong></div>" +
+        "<div style='margin-top:8px;'>📍 Current Location: <strong>" +
+          escapeHtml(tank.currentLocation) +
+        "</strong></div>" +
+        "<div>📌 Status: <strong>" +
+          escapeHtml(tank.status) +
+        "</strong></div>" +
+      "</div>" +
+      "<div style='margin-top:10px;text-align:center;font-weight:bold;color:#555;'>" +
+        "📜 " + history.length + " movement record(s)" +
+      "</div>";
+
+    traceSummary.appendChild(summary);
+
+    if (history.length === 0) {
+      traceHistory.innerHTML =
+        "<div class='trace-empty'>No movement history found.</div>";
+      return;
+    }
+
+    const timeline = document.createElement("div");
+    timeline.className = "trace-card trace-timeline";
+
+    history.forEach(function(record, index) {
+
+      const item = document.createElement("div");
+      item.className = "trace-record";
+
+      const action = String(record.action || "");
+
+      item.innerHTML =
+        "<div class='trace-record-title'>" +
+          "①".replace("①", String(index + 1) + ".") +
+          " " + escapeHtml(formatTraceDate(record.date)) +
+          " " + escapeHtml(formatTraceTime(record.time)) +
+          "<span class='trace-action'>" +
+            escapeHtml(action) +
+          "</span>" +
+        "</div>" +
+        "<div class='trace-record-detail'>" +
+          "<strong>" +
+            escapeHtml(record.fromLocation) +
+          "</strong>" +
+          " &nbsp; → &nbsp; " +
+          "<strong>" +
+            escapeHtml(record.toLocation) +
+          "</strong>" +
+          "<br>User: " +
+          escapeHtml(record.user || "-") +
+          (record.remark
+            ? "<br>Remark: " + escapeHtml(record.remark)
+            : "") +
+          "<br>Record ID: " +
+          escapeHtml(record.recordId || "-") +
+        "</div>";
+
+      timeline.appendChild(item);
+    });
+
+    traceHistory.appendChild(timeline);
+  }
+
+  async function startTankTrace() {
+
+    if (confirmProcessing || traceLoading) {
+      return;
+    }
+
+    if (scannedTanks.size > 0) {
+      const proceed = confirm(
+        "Switching to TANK TRACE will clear the scanned transaction list. Continue?"
+      );
+
+      if (!proceed) return;
+
+      scannedTanks.clear();
+      renderTankList();
+      updateUI();
+      lastScanned = "";
+    }
+
+    traceMode = true;
+
+    if (cameraRunning) {
+      await stopScanner();
+    }
+
+    inventorySection.classList.add("hidden");
+    traceSection.classList.remove("hidden");
+
+    document.querySelectorAll(".section").forEach(function(section) {
+      if (
+        section !== traceSection &&
+        section !== inventorySection
+      ) {
+        section.classList.add("hidden");
+      }
+    });
+
+    pageTitle.textContent = "🔎 TANK TRACE";
+
+    issueInModeButton.style.background = "#e9ecef";
+    issueInModeButton.style.color = "#333";
+
+    issueOutModeButton.style.background = "#e9ecef";
+    issueOutModeButton.style.color = "#333";
+
+    inventoryModeButton.style.background = "#e9ecef";
+    inventoryModeButton.style.color = "#333";
+
+    traceModeButton.style.background = "#6f42c1";
+    traceModeButton.style.color = "white";
+
+    traceSummary.innerHTML =
+      "<div class='message info'>📷 Press START SCAN and scan a tank barcode.</div>";
+
+    traceHistory.innerHTML = "";
+  }
+
+  async function traceScanSuccess(decodedText) {
+
+    const barcode = String(decodedText || "").trim();
+
+    if (!barcode || traceLoading) {
+      return;
+    }
+
+    traceLoading = true;
+
+    initAudio();
+    showMessage(
+      "🔎 Loading TANK TRACE...<br><strong>" +
+      escapeHtml(barcode) +
+      "</strong>",
+      "info"
+    );
+
+    try {
+
+      const data =
+        await getTankTraceFromAPI(barcode);
+
+      if (!data.success) {
+
+        playErrorSound();
+
+        traceSummary.innerHTML =
+          "<div class='message error'>" +
+          "❌ " +
+          escapeHtml(data.message || "TANK TRACE failed.") +
+          "<br>Barcode: <strong>" +
+          escapeHtml(barcode) +
+          "</strong></div>";
+
+        traceHistory.innerHTML = "";
+
+        showMessage(
+          "❌ " + escapeHtml(data.message || "TANK TRACE failed."),
+          "error"
+        );
+
+        return;
+      }
+
+      playScanSuccessSound();
+      renderTankTrace(data);
+
+      showMessage(
+        "✅ TANK TRACE loaded successfully.",
+        "success"
+      );
+
+    } catch (error) {
+
+      console.error(error);
+      playErrorSound();
+
+      traceSummary.innerHTML =
+        "<div class='message error'>" +
+        "❌ Unable to load TANK TRACE.<br><br>" +
+        escapeHtml(error.message) +
+        "</div>";
+
+      traceHistory.innerHTML = "";
+
+    } finally {
+
+      traceLoading = false;
+    }
+  }
+
+  // ==========================================================
   // INVENTORY
   // ==========================================================
 
@@ -1660,6 +2043,8 @@
   }
 
   function showInventory() {
+    traceMode = false;
+
     if (cameraRunning) {
       stopScanner();
     }
@@ -1683,10 +2068,15 @@
     inventoryModeButton.style.background = "#0d6efd";
     inventoryModeButton.style.color = "white";
 
+    traceModeButton.style.background = "#e9ecef";
+    traceModeButton.style.color = "#333";
+
     loadInventory();
   }
 
   function showTransactionMode() {
+    traceMode = false;
+    traceSection.classList.add("hidden");
     inventorySection.classList.add("hidden");
 
     document.querySelectorAll(".section").forEach(function(section) {
@@ -1697,6 +2087,9 @@
 
     inventoryModeButton.style.background = "#e9ecef";
     inventoryModeButton.style.color = "#333";
+
+    traceModeButton.style.background = "#e9ecef";
+    traceModeButton.style.color = "#333";
   }
 
   // ==========================================================
@@ -1757,6 +2150,8 @@
       stopButton.disabled = true;
       issueInModeButton.disabled = true;
       issueOutModeButton.disabled = true;
+      inventoryModeButton.disabled = true;
+      traceModeButton.disabled = true;
 
       showMessage(
         "⏳ Processing " + actionText +
@@ -1829,6 +2224,8 @@
           confirmProcessing = false;
           issueInModeButton.disabled = false;
           issueOutModeButton.disabled = false;
+          inventoryModeButton.disabled = false;
+          traceModeButton.disabled = false;
           updateUI();
           return;
         }
@@ -1852,6 +2249,8 @@
         confirmProcessing = false;
         issueInModeButton.disabled = false;
         issueOutModeButton.disabled = false;
+        inventoryModeButton.disabled = false;
+        traceModeButton.disabled = false;
 
       } catch (error) {
 
@@ -1868,6 +2267,8 @@
         confirmProcessing = false;
         issueInModeButton.disabled = false;
         issueOutModeButton.disabled = false;
+        inventoryModeButton.disabled = false;
+        traceModeButton.disabled = false;
         updateUI();
       }
     }
@@ -1954,6 +2355,13 @@
     "click",
     function() {
       loadInventory();
+    }
+  );
+
+  traceModeButton.addEventListener(
+    "click",
+    function() {
+      startTankTrace();
     }
   );
 
