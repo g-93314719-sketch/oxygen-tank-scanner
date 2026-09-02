@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <title>Oxygen Tank Scanner</title>
+
+  <script src="https://unpkg.com/html5-qrcode"
+          type="text/javascript">
+  </script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f5f7fa;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    #reader {
+      width: 100%;
+      max-width: 500px;
+      margin: 20px auto;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    #result {
+      margin-top: 20px;
+      padding: 15px;
+      background: white;
+      border-radius: 12px;
+      font-size: 18px;
+      word-break: break-all;
+    }
+
+    .success {
+      color: green;
+    }
+
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>📷 Oxygen Tank Scanner</h1>
+
+  <div id="reader"></div>
+
+  <div id="result">
+    Waiting for barcode...
+  </div>
+
+  <script>
+
+    const resultDiv =
+      document.getElementById("result");
+
+    function onScanSuccess(decodedText) {
+
+      console.log(
+        "Scanned:",
+        decodedText
+      );
+
+      resultDiv.innerHTML =
+        "✅ Scanned Barcode:<br><br>" +
+        "<strong>" +
+        decodedText +
+        "</strong>";
+
+    }
+
+
+    function onScanFailure(error) {
+
+      // Ignore normal scanning failures
+      // because the camera continuously scans.
+    }
+
+
+    const html5QrCode =
+      new Html5Qrcode("reader");
+
+
+    const config = {
+
+      fps: 10,
+
+      qrbox: {
+        width: 280,
+        height: 150
+      },
+
+      rememberLastUsedCamera: true,
+
+      supportedScanTypes: [
+        Html5QrcodeScanType.SCAN_TYPE_CAMERA
+      ]
+
+    };
+
+
+    Html5Qrcode
+      .getCameras()
+
+      .then(devices => {
+
+        if (devices && devices.length) {
+
+          console.log(
+            "Cameras found:",
+            devices
+          );
+
+
+          // Try to find the rear camera
+          let cameraId =
+            devices[devices.length - 1].id;
+
+
+          for (let device of devices) {
+
+            const label =
+              (device.label || "").toLowerCase();
+
+            if (
+              label.includes("back") ||
+              label.includes("rear") ||
+              label.includes("environment")
+            ) {
+
+              cameraId =
+                device.id;
+
+              break;
+            }
+
+          }
+
+
+          html5QrCode
+            .start(
+              cameraId,
+              config,
+              onScanSuccess,
+              onScanFailure
+            )
+
+            .then(() => {
+
+              resultDiv.innerHTML =
+                "🟢 Camera started<br>" +
+                "Point the camera at a barcode.";
+
+            })
+
+            .catch(err => {
+
+              console.error(err);
+
+              resultDiv.innerHTML =
+                "<span class='error'>" +
+                "❌ Camera failed to start<br><br>" +
+                err +
+                "</span>";
+
+            });
+
+        }
+
+        else {
+
+          resultDiv.innerHTML =
+            "<span class='error'>" +
+            "❌ No camera found." +
+            "</span>";
+
+        }
+
+      })
+
+      .catch(err => {
+
+        console.error(err);
+
+        resultDiv.innerHTML =
+          "<span class='error'>" +
+          "❌ Unable to access camera<br><br>" +
+          err +
+          "</span>";
+
+      });
+
+  </script>
+
+</body>
+</html>
