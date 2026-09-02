@@ -68,20 +68,147 @@
     const resultDiv =
       document.getElementById("result");
 
-    function onScanSuccess(decodedText) {
+    const API_URL =
+  "把你的 Apps Script Web App /exec URL 放这里";
 
-      console.log(
-        "Scanned:",
-        decodedText
-      );
 
-      resultDiv.innerHTML =
-        "✅ Scanned Barcode:<br><br>" +
-        "<strong>" +
-        decodedText +
-        "</strong>";
+let lastScanned = "";
+
+
+function onScanSuccess(decodedText) {
+
+  // 防止同一个 barcode 连续重复扫描
+  if (decodedText === lastScanned) {
+    return;
+  }
+
+  lastScanned = decodedText;
+
+  resultDiv.innerHTML =
+    "🔎 Searching TANK DB...<br><br>" +
+    "<strong>" +
+    decodedText +
+    "</strong>";
+
+
+  const callbackName =
+    "tankCallback_" +
+    Date.now();
+
+
+  window[callbackName] = function(data) {
+
+    console.log(
+      "TANK DB response:",
+      data
+    );
+
+
+    // 删除 callback
+    delete window[callbackName];
+
+
+    // 删除 script
+    const script =
+      document.getElementById(callbackName);
+
+    if (script) {
+      script.remove();
+    }
+
+
+    if (data.success) {
+
+      resultDiv.innerHTML = `
+
+        <div class="success">
+
+          <h2>✅ TANK FOUND</h2>
+
+          <p>
+            <strong>Tank ID</strong><br>
+            ${data.tankId}
+          </p>
+
+          <p>
+            <strong>Barcode</strong><br>
+            ${data.barcode}
+          </p>
+
+          <p>
+            <strong>Type</strong><br>
+            ${data.tankType}
+          </p>
+
+          <p>
+            <strong>BN / PI</strong><br>
+            ${data.bnPi}
+          </p>
+
+          <p>
+            <strong>Current Location</strong><br>
+            ${data.currentLocation}
+          </p>
+
+          <p>
+            <strong>Status</strong><br>
+            ${data.status}
+          </p>
+
+        </div>
+
+      `;
 
     }
+
+    else {
+
+      resultDiv.innerHTML = `
+
+        <div class="error">
+
+          <h2>❌ TANK NOT FOUND</h2>
+
+          <p>
+            Barcode:
+            <strong>
+              ${decodedText}
+            </strong>
+          </p>
+
+          <p>
+            This barcode is not in TANK DB.
+          </p>
+
+        </div>
+
+      `;
+
+    }
+
+  };
+
+
+  const script =
+    document.createElement("script");
+
+
+  script.id =
+    callbackName;
+
+
+  script.src =
+    API_URL +
+    "?action=findTank" +
+    "&barcode=" +
+    encodeURIComponent(decodedText) +
+    "&callback=" +
+    callbackName;
+
+
+  document.body.appendChild(script);
+
+}
 
 
     function onScanFailure(error) {
