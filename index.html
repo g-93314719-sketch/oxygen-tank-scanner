@@ -1650,49 +1650,45 @@
     return callJsonp(
       API_URL +
       "?action=tankTrace&barcode=" +
-      encodeURIComponent(barcode),
+      encodeURIComponent(barcode) +
+      "&_=" + Date.now(),
       "tankTraceCallback",
       30000
     );
   }
 
+  // Google Sheets dates/times are returned as ISO values.
+  // Keep the original sheet date/time instead of applying the
+  // phone's timezone and accidentally shifting the displayed value.
   function formatTraceDate(value) {
     if (!value) return "";
 
-    const d = new Date(value);
+    const text = String(value);
+    const match = text.match(/(\\d{4})-(\\d{2})-(\\d{2})/);
 
-    if (isNaN(d.getTime())) {
-      return String(value);
+    if (match) {
+      return match[3] + "/" + match[2] + "/" + match[1];
     }
 
-    return new Intl.DateTimeFormat(
-      "en-GB",
-      {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric"
-      }
-    ).format(d);
+    return text;
   }
 
   function formatTraceTime(value) {
     if (!value) return "";
 
-    const d = new Date(value);
+    const text = String(value);
+    const match = text.match(/T?(\\d{2}):(\\d{2})(?::(\\d{2}))?/);
 
-    if (isNaN(d.getTime())) {
-      return String(value);
+    if (match) {
+      let hour = Number(match[1]);
+      const minute = match[2];
+      const second = match[3] || "00";
+      const suffix = hour >= 12 ? "PM" : "AM";
+      hour = hour % 12 || 12;
+      return String(hour).padStart(2, "0") + ":" + minute + ":" + second + " " + suffix;
     }
 
-    return new Intl.DateTimeFormat(
-      "en-MY",
-      {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: true
-      }
-    ).format(d);
+    return text;
   }
 
   function renderTankTrace(data) {
