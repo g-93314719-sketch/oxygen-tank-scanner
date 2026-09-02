@@ -416,7 +416,7 @@
 
 
   <!-- SCANNER -->
-  <div class="section">
+  <div id="scannerSection" class="section">
 
     <div id="reader"></div>
 
@@ -538,6 +538,9 @@
 
   const traceSection =
     document.getElementById("traceSection");
+
+  const scannerSection =
+    document.getElementById("scannerSection");
 
   const traceSummary =
     document.getElementById("traceSummary");
@@ -1828,6 +1831,7 @@
     document.querySelectorAll(".section").forEach(function(section) {
       if (
         section !== traceSection &&
+        section !== scannerSection &&
         section !== inventorySection
       ) {
         section.classList.add("hidden");
@@ -1847,6 +1851,8 @@
 
     traceModeButton.style.background = "#6f42c1";
     traceModeButton.style.color = "white";
+
+    scannerSection.classList.remove("hidden");
 
     traceSummary.innerHTML =
       "<div class='message info'>📷 Press START SCAN and scan a tank barcode.</div>";
@@ -2044,6 +2050,7 @@
 
   function showInventory() {
     traceMode = false;
+    scannerSection.classList.add("hidden");
 
     if (cameraRunning) {
       stopScanner();
@@ -2076,6 +2083,7 @@
 
   function showTransactionMode() {
     traceMode = false;
+    scannerSection.classList.remove("hidden");
     traceSection.classList.add("hidden");
     inventorySection.classList.add("hidden");
 
